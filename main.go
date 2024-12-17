@@ -18,7 +18,15 @@ type Config struct {
 	Scopes       []string `toml:"Scopes"`
 }
 
+var (
+	// These will get overridden goreleaser.
+	buildVersion = "dev"
+	buildCommit  = "none"
+	buildDate    = "unknown"
+)
+
 var configFile = flag.String("config", "config.toml", "Config file name and path")
+var showVersion = flag.Bool("version", false, "Show version and exit.")
 
 func getClient() (*http.Client, error) {
 	var config Config
@@ -97,6 +105,12 @@ func upload(source, destination string) error {
 	return nil
 }
 
+func printVersion() {
+	fmt.Printf(`
+globus-http %v, git-%v. Built %v
+`, buildVersion, buildCommit, buildDate)
+}
+
 func help() {
 	fmt.Print(`
 globus-http allows download and upload throught the Globus HTTP API.
@@ -121,11 +135,18 @@ ClientSecret = "your-client-secret"
 Scopes = ["scope1", "scope2", "scope3"]
 
 `)
+	printVersion()
+
 }
 
 func main() {
+	flag.Usage = help
 	flag.Parse()
 	args := flag.Args()
+	if *showVersion {
+		printVersion()
+		os.Exit(0)
+	}
 	if len(args) < 1 {
 		fmt.Println("Missing command.")
 		help()
